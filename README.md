@@ -1,60 +1,60 @@
 # MindX Week 1 - Fullstack Application
 
 **Production URL:** https://tulm.mindx.edu.vn  
-**Status:** ✅ **LIVE & OPERATIONAL**
+**Status:** ✅ **ĐANG HOẠT ĐỘNG**
 
-Complete fullstack application for MindX Engineer Onboarding Program Week 1.
+Ứng dụng fullstack hoàn chỉnh cho chương trình MindX Engineer Onboarding - Tuần 1.
 
-## 🎯 Project Overview
+## 🎯 Tổng Quan Dự Án
 
-A production-ready fullstack application demonstrating:
+Ứng dụng fullstack production-ready bao gồm:
 
 - **Backend**: Node.js/TypeScript Express API
-- **Frontend**: React/TypeScript with Vite
-- **Authentication**: Dual system (JWT + OpenID Connect)
-- **Infrastructure**: Docker + Kubernetes (AKS)
-- **Domain**: Custom domain with HTTPS (Let's Encrypt)
-- **CI/CD Ready**: All manifests and configs included
+- **Frontend**: React/TypeScript với Vite
+- **Authentication**: Hệ thống xác thực kép (JWT + OpenID Connect với MindX ID)
+- **Infrastructure**: Docker + Kubernetes (Azure AKS)
+- **Domain**: HTTPS với Let's Encrypt
+- **Deployment**: Thủ công lên Azure AKS
 
-**🌐 Live Demo:** https://tulm.mindx.edu.vn
+**🌐 Demo:** https://tulm.mindx.edu.vn
 
-## 📁 Project Structure
+## 📁 Cấu Trúc Dự Án
 
 ```
 week1-fullstack-app/
 ├── api/                          # Backend API
 │   ├── src/
-│   │   ├── index.ts             # Main API server
-│   │   └── middleware/          # Auth & DB placeholders
-│   ├── Dockerfile               # Multi-stage build
-│   ├── docker-compose.yml       # Local deployment
+│   │   ├── index.ts             # Server chính với authentication
+│   │   └── middleware/          # JWT auth & database middleware
+│   ├── Dockerfile               # Multi-stage Docker build
+│   ├── docker-compose.yml       # Local development
 │   └── README.md                # API documentation
 │
 ├── frontend/                     # React Frontend
 │   ├── src/
+│   │   ├── components/          # Login, Register, Dashboard, OpenID
+│   │   ├── contexts/            # AuthContext quản lý authentication
 │   │   ├── App.tsx              # Main component
-│   │   └── App.css              # Styles
+│   │   └── main.tsx             # Entry point
 │   ├── Dockerfile               # Nginx production build
 │   ├── nginx.conf               # Nginx configuration
 │   └── README.md                # Frontend documentation
 │
-├── k8s-manifests/               # Kubernetes YAML files
-│   ├── api-deployment.yaml      # API deployment
-│   ├── frontend-deployment.yaml # Frontend deployment
-│   ├── ingress.yaml             # Ingress routing
-│   ├── cert-issuer.yaml         # SSL configuration
-│   └── README.md                # Deployment guide
+├── k8s-manifests/               # Kubernetes deployment files
+│   ├── api-deployment.yaml      # API deployment & service
+│   ├── frontend-deployment.yaml # Frontend deployment & service
+│   ├── ingress.yaml             # Ingress với SSL/TLS
+│   ├── cert-issuer.yaml         # Let's Encrypt issuer
+│   └── README.md                # Hướng dẫn deployment
 │
-├── REQUEST_DEVOPS.md            # DevOps resource request
-├── KUBERNETES_GUIDE.md          # K8s learning guide
-└── README.md                    # This file
+└── README.md                    # File này
 ```
 
-## 🚀 Quick Start
+## 🚀 Chạy Dự Án
 
-### Local Development
+### Development (Local)
 
-#### API (Port 3000)
+#### 1. Backend API (Port 3000)
 
 ```bash
 cd api
@@ -62,7 +62,7 @@ npm install
 npm run dev
 ```
 
-#### Frontend (Port 5173)
+#### 2. Frontend (Port 5173)
 
 ```bash
 cd frontend
@@ -70,253 +70,239 @@ npm install
 npm run dev
 ```
 
-Open:
+Truy cập:
 
-- Frontend: http://localhost:5173
-- API: http://localhost:3000
+- **Frontend**: http://localhost:5173
+- **API**: http://localhost:3000
+- **API Health**: http://localhost:3000/health
 
-### Docker (Local Testing)
+### Docker (Test trên Local)
 
-#### Using Docker Compose
+#### Option 1: Docker Compose (Khuyên dùng)
 
 ```bash
-# Start both services
+# Khởi động cả API và Frontend
 docker-compose up -d
 
-# View logs
+# Xem logs
 docker-compose logs -f
 
-# Stop services
+# Dừng services
 docker-compose down
 ```
 
-#### Individual Containers
+#### Option 2: Build riêng từng container
 
 ```bash
-# API (Port 3000)
+# Build và chạy API (Port 3000)
 cd api
 docker build -t mindx-week1-api:latest .
 docker run -d -p 3000:3000 mindx-week1-api:latest
 
-# Frontend (Port 8080)
+# Build và chạy Frontend (Port 8080)
 cd frontend
 docker build -t mindx-week1-frontend:latest .
 docker run -d -p 8080:80 mindx-week1-frontend:latest
 ```
 
-## ☁️ Azure Deployment
+## ☁️ Deployment lên Azure (Thủ Công)
 
-### Step 1: Push to Azure Container Registry
+### Bước 1: Build và Push Images lên Azure Container Registry
 
 ```bash
-# Login to ACR
+# Login vào ACR
 az acr login --name <your-acr-name>
 
-# Build and push API
+# Build và push API image
 cd api
 docker build -t <your-acr-name>.azurecr.io/mindx-week1-api:latest .
 docker push <your-acr-name>.azurecr.io/mindx-week1-api:latest
 
-# Build and push Frontend
+# Build và push Frontend image
 cd ../frontend
 docker build -t <your-acr-name>.azurecr.io/mindx-week1-frontend:latest .
 docker push <your-acr-name>.azurecr.io/mindx-week1-frontend:latest
 ```
 
-### Step 2: Deploy to AKS
+### Bước 2: Deploy lên AKS
 
 ```bash
-# Connect to AKS
-az aks get-credentials --name <your-aks-name> --resource-group <your-rg-name>
+# Kết nối với AKS cluster
+az aks get-credentials --name <aks-cluster-name> --resource-group <resource-group>
 
-# Update manifests
-# Edit k8s-manifests/*.yaml and replace placeholders
+# Verify kết nối
+kubectl get nodes
 
-# Deploy
+# Deploy các components (theo thứ tự)
 kubectl apply -f k8s-manifests/api-deployment.yaml
 kubectl apply -f k8s-manifests/frontend-deployment.yaml
+kubectl apply -f k8s-manifests/cert-issuer.yaml
 kubectl apply -f k8s-manifests/ingress.yaml
 
-# Check status
+# Kiểm tra trạng thái deployment
 kubectl get all
 kubectl get ingress
+kubectl get certificate
 ```
 
-See [KUBERNETES_GUIDE.md](KUBERNETES_GUIDE.md) for detailed instructions.
+### Bước 3: Cập nhật khi có thay đổi
 
-## 📊 Architecture
+```bash
+# Rebuild và push image mới
+docker build -t <your-acr-name>.azurecr.io/mindx-week1-api:latest .
+docker push <your-acr-name>.azurecr.io/mindx-week1-api:latest
+
+# Restart deployment để pull image mới
+kubectl rollout restart deployment/mindx-week1-api
+kubectl rollout restart deployment/mindx-week1-frontend
+
+# Theo dõi quá trình update
+kubectl rollout status deployment/mindx-week1-api
+```
+
+**Lưu ý:** Deployment này được thực hiện hoàn toàn thủ công, không sử dụng CI/CD pipeline.
+
+## 📊 Kiến Trúc Hệ Thống
 
 ### Local Development
 
 ```
-┌─────────────┐         ┌─────────────┐
-│  Frontend   │  HTTP   │     API     │
-│   :5173     │────────▶│    :3000    │
-│ (Vite Dev)  │         │  (Express)  │
-└─────────────┘         └─────────────┘
+┌─────────────┐         ┌─────────────────────┐
+│  Frontend   │  HTTP   │        API          │
+│   :5173     │────────▶│       :3000         │
+│ (Vite Dev)  │         │  JWT + OpenID Auth  │
+└─────────────┘         └─────────────────────┘
 ```
 
-### Docker Compose
+### Production (Azure AKS)
 
 ```
-┌─────────────┐         ┌─────────────┐
-│  Frontend   │  HTTP   │     API     │
-│   :8080     │────────▶│    :3000    │
-│  (Nginx)    │         │  (Node.js)  │
-└─────────────┘         └─────────────┘
+                    Internet (HTTPS)
+                           │
+                           ▼
+        ┌──────────────────────────────────┐
+        │   Nginx Ingress Controller       │
+        │   SSL/TLS (Let's Encrypt)        │
+        │   tulm.mindx.edu.vn              │
+        └──────────────────────────────────┘
+                 │                │
+        /        │                │         /api/*
+                 ▼                ▼
+    ┌──────────────────┐    ┌──────────────────┐
+    │  Frontend        │    │  API             │
+    │  Service         │    │  Service         │
+    │  (ClusterIP)     │    │  (ClusterIP)     │
+    └──────────────────┘    └──────────────────┘
+                 │                │
+                 ▼                ▼
+    ┌──────────────────┐    ┌──────────────────┐
+    │  Frontend Pods   │    │  API Pods        │
+    │  (Nginx)         │    │  (Node.js)       │
+    │  Replicas: 2     │    │  Replicas: 2     │
+    └──────────────────┘    └──────────────────┘
 ```
 
-### Kubernetes (AKS)
+## 📋 Tính Năng
 
-```
-Internet (HTTPS)
-    │
-    ▼
-┌─────────────────────────────────┐
-│   Ingress (SSL Termination)     │
-│   <your-domain>.mindx-dev.com   │
-└─────────────────────────────────┘
-    │                    │
-    ▼                    ▼
-┌─────────────┐    ┌─────────────┐
-│  Frontend   │    │     API     │
-│  Service    │    │   Service   │
-│ (ClusterIP) │    │ (ClusterIP) │
-└─────────────┘    └─────────────┘
-    │                    │
-    ▼                    ▼
-┌─────────────┐    ┌─────────────┐
-│  Frontend   │    │     API     │
-│  Pods (x2)  │    │  Pods (x2)  │
-│  (Nginx)    │    │  (Node.js)  │
-└─────────────┘    └─────────────┘
-```
+### Backend API
 
-## 📋 Features
-
-### API Features
-
-- ✅ TypeScript for type safety
-- ✅ Express.js framework
+- ✅ **TypeScript** với Express.js
+- ✅ **Authentication hai cấp độ:**
+  - JWT Authentication (Register/Login cổ điển)
+  - OpenID Connect với MindX ID (SSO)
+- ✅ **Protected Routes** với JWT middleware
+- ✅ **Password Hashing** với bcrypt
 - ✅ CORS enabled
-- ✅ Health check endpoint
 - ✅ Request logging
 - ✅ Error handling
-- ✅ Docker multi-stage build (140MB)
-- ✅ Kubernetes health probes
-- ✅ Auth middleware (ready for Step 5)
-- ✅ Database abstraction (ready for Week 2-3)
+- ✅ Health check endpoint
+- ✅ Docker multi-stage build (~140MB)
 
-### Frontend Features
+### Frontend
 
-- ✅ React 18 + TypeScript
-- ✅ Vite for fast development
+- ✅ **React 18 + TypeScript** với Vite
+- ✅ **Dual Authentication UI:**
+  - Login/Register form (JWT)
+  - "Login với MindX ID" button (OpenID Connect)
+- ✅ **AuthContext** quản lý authentication state
+- ✅ **Protected Routes** - Dashboard chỉ hiện khi đã login
+- ✅ **Token Management** - Auto-save/load từ localStorage
 - ✅ Modern responsive UI
-- ✅ API integration
-- ✅ Health monitoring
-- ✅ Docker with Nginx
-- ✅ Production optimized
-- ✅ Security headers
+- ✅ Docker với Nginx (production-optimized)
 
-### Infrastructure Features
+### Infrastructure
 
-- ✅ Docker containerization
-- ✅ Kubernetes manifests
-- ✅ Ingress routing
-- ✅ SSL/TLS with cert-manager
-- ✅ Health checks & probes
-- ✅ Resource limits
-- ✅ Horizontal scaling ready
-- ✅ Production-ready configuration
+- ✅ **Docker containerization** - Multi-stage builds
+- ✅ **Kubernetes (AKS)** - Production deployment
+- ✅ **Nginx Ingress** - SSL/TLS termination
+- ✅ **Let's Encrypt** - Tự động renew certificates
+- ✅ **Health checks & probes** - Liveness & readiness
+- ✅ **Horizontal scaling** - Multiple replicas
+- ✅ **Custom domain** với HTTPS
 
-## ✅ Week 1 Progress Tracker
+## ✅ Tiến Độ Hoàn Thành
 
-### Completed ✅
+### Đã Hoàn Thành ✅
 
-- [x] Step 1.1: Create Simple API
-- [x] Step 1.2: Containerize API
-- [x] Step 1.2: Test Docker locally
-- [x] Step 4: Create React Frontend
-- [x] Step 4: Containerize Frontend
-- [x] Prepare K8s manifests
-- [x] Create deployment documentation
+- [x] **Backend API** - Express.js + TypeScript
+- [x] **Frontend** - React + TypeScript + Vite
+- [x] **Authentication System** - JWT + OpenID Connect với MindX ID
+- [x] **Docker Containers** - Multi-stage builds cho cả API và Frontend
+- [x] **Kubernetes Manifests** - Deployments, Services, Ingress
+- [x] **Azure Deployment** - Deploy lên AKS
+- [x] **SSL/TLS** - Let's Encrypt certificates
+- [x] **Custom Domain** - tulm.mindx.edu.vn
+- [x] **Production Ready** - Đang chạy ổn định trên production
 
-### Pending (Requires DevOps) ⏸️
+### Tech Stack đã áp dụng
 
-- [ ] Step 1.3: Setup ACR
-- [ ] Step 1.4: Push to ACR
-- [ ] Step 1.5: Deploy to Azure Web App (optional)
-- [ ] Step 2: Deploy to AKS
-- [ ] Step 3: Setup Ingress
-- [ ] Step 5: Add Authentication
-- [ ] Step 6: Setup HTTPS & Domain
+| Component            | Technology                      |
+| -------------------- | ------------------------------- |
+| **Backend**          | Node.js, Express, TypeScript    |
+| **Frontend**         | React 18, TypeScript, Vite      |
+| **Authentication**   | JWT, bcrypt, OpenID Connect     |
+| **Containerization** | Docker, Multi-stage builds      |
+| **Orchestration**    | Kubernetes (Azure AKS)          |
+| **Ingress**          | Nginx Ingress Controller        |
+| **SSL/TLS**          | cert-manager + Let's Encrypt    |
+| **Cloud**            | Azure (AKS, Container Registry) |
+| **Deployment**       | Manual (kubectl)                |
 
-## 📞 Getting Help
+## 📚 Tài Liệu Tham Khảo
 
-### Request Azure Resources
+- [API Documentation](api/README.md) - Chi tiết về backend API endpoints
+- [Frontend Documentation](frontend/README.md) - Hướng dẫn về React frontend
+- [K8s Manifests Guide](k8s-manifests/README.md) - Kubernetes deployment manifests
 
-See [REQUEST_DEVOPS.md](REQUEST_DEVOPS.md) for template email to DevOps team.
+## 🎓 Kiến Thức Đạt Được
 
-### Learn Kubernetes
+Sau khi hoàn thành dự án này, bạn đã nắm được:
 
-See [KUBERNETES_GUIDE.md](KUBERNETES_GUIDE.md) for comprehensive K8s tutorial.
-
-### Documentation
-
-- [API Documentation](api/README.md)
-- [Frontend Documentation](frontend/README.md)
-- [K8s Manifests Guide](k8s-manifests/README.md)
-
-## 🎓 Learning Outcomes
-
-After completing this project, you will understand:
-
-- ✅ Building TypeScript applications (API & Frontend)
+- ✅ Xây dựng ứng dụng TypeScript (API & Frontend)
+- ✅ Authentication với JWT và OpenID Connect
 - ✅ Docker containerization & multi-stage builds
-- ✅ Container orchestration with Kubernetes
-- ✅ Ingress controllers & routing
-- ✅ SSL/TLS certificates with cert-manager
+- ✅ Container orchestration với Kubernetes
+- ✅ Nginx Ingress controllers & routing
+- ✅ SSL/TLS certificates với cert-manager
 - ✅ Azure cloud services (ACR, AKS)
-- ✅ Production deployment practices
+- ✅ Production deployment thủ công
 - ✅ Health checks & monitoring
 
-## 🚀 Next Steps
+## 🏆 Kết Quả Đạt Được
 
-1. **Immediate**: Test everything locally
-2. **Day 1-2**: Request Azure resources from DevOps
-3. **Day 3-4**: Push images to ACR
-4. **Day 5-6**: Deploy to AKS
-5. **Week 2**: Add monitoring & metrics
-6. **Week 3**: Integrate AI capabilities
-7. **Week 4**: Launch & iterate
-
-## 📊 Tech Stack
-
-| Layer                | Technology                   |
-| -------------------- | ---------------------------- |
-| **Frontend**         | React, TypeScript, Vite      |
-| **Backend**          | Node.js, Express, TypeScript |
-| **Containerization** | Docker, Docker Compose       |
-| **Orchestration**    | Kubernetes (AKS)             |
-| **Ingress**          | nginx-ingress                |
-| **SSL**              | cert-manager + Let's Encrypt |
-| **Cloud**            | Azure (ACR, AKS)             |
-| **CI/CD**            | Ready for GitHub Actions     |
-
-## 🏆 Success Criteria
-
-- ✅ All applications run locally
-- ✅ Docker containers work correctly
-- ✅ API responds to requests
-- ✅ Frontend communicates with API
-- ✅ Ready to deploy to cloud
-- ⏸️ Deployed to AKS (pending DevOps)
-- ⏸️ HTTPS working (pending DNS)
-- ⏸️ Production ready (pending deployment)
+- ✅ Ứng dụng chạy tốt trên local
+- ✅ Docker containers hoạt động chính xác
+- ✅ API response đầy đủ các endpoints
+- ✅ Frontend tương tác với API
+- ✅ Authentication system hoàn chỉnh (JWT + OpenID)
+- ✅ **Deployed thành công lên Azure AKS**
+- ✅ **HTTPS hoạt động với Let's Encrypt**
+- ✅ **Production ready và đang chạy ổn định**
+- ✅ **Custom domain: tulm.mindx.edu.vn**
 
 ---
 
-**Author**: MindX Engineer Onboarding Program  
+**Author**: Lê Minh Tú - MindX Engineer Onboarding Program  
 **Week**: 1  
-**Status**: Local Development Complete ✅ | Cloud Deployment Pending ⏸️  
-**Last Updated**: September 30, 2025
+**Status**: ✅ **HOÀN THÀNH & PRODUCTION READY**  
+**Last Updated**: October 6, 2025
