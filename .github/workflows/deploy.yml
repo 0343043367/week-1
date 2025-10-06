@@ -1,0 +1,94 @@
+name: Deploy to AKS
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch: # Allow manual trigger
+
+env:
+  ACR_NAME: mindxtulmacr
+  AKS_CLUSTER: mindx-tulm-aks
+  RESOURCE_GROUP: mindx-tulm-rg
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Login to Azure
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Login to ACR
+      - name: Login to Azure Container Registry
+        run: az acr login --name ${{ env.ACR_NAME }}
+
+      # Build and Push API Image
+      - name: Build API Docker Image
+        run: |
+          docker build -t ${{ env.ACR_NAME }}.azurecr.io/mindx-week1-api:${{ github.sha }} \
+                       -t ${{ env.ACR_NAME }}.azurecr.io/mindx-week1-api:latest \
+                       ./api
+
+      - name: Push API Image to ACR
+        run: |
+          docker push ${{ env.ACR_NAME }}.azurecr.io/mindx-week1-api:${{ github.sha }}
+          docker push ${{ env.ACR_NAME }}.azurecr.io/mindx-week1-api:latest
+
+      # Build and Push Frontend Image
+      - name: Build Frontend Docker Image
+        run: |
+          docker build -t ${{ env.ACR_NAME }}.azurecr.io/mindx-week1-frontend:${{ github.sha }} \
+                       -t ${{ env.ACR_NAME }}.azurecr.io/mindx-week1-frontend:latest \
+                       ./frontend
+
+      - name: Push Frontend Image to ACR
+        run: |
+          docker push ${{ env.ACR_NAME }}.azurecr.io/mindx-week1-frontend:${{ github.sha }}
+          docker push ${{ env.ACR_NAME }}.azurecr.io/mindx-week1-frontend:latest
+
+      # Deploy to AKS
+      - name: Set AKS Context
+        run: |
+          az aks get-credentials --name ${{ env.AKS_CLUSTER }} --resource-group ${{ env.RESOURCE_GROUP }} --overwrite-existing
+
+      - name: Deploy API to AKS
+        run: |
+          kubectl set image deployment/mindx-api api=${{ env.ACR_NAME }}.azurecr.io/mindx-week1-api:${{ github.sha }} --record
+          kubectl rollout status deployment/mindx-api --timeout=300s
+
+      - name: Deploy Frontend to AKS
+        run: |
+          kubectl set image deployment/mindx-frontend frontend=${{ env.ACR_NAME }}.azurecr.io/mindx-week1-frontend:${{ github.sha }} --record
+          kubectl rollout status deployment/mindx-frontend --timeout=300s
+
+      # Verify Deployment
+      - name: Verify Deployment
+        run: |
+          echo "Checking deployment status..."
+          kubectl get deployments
+          kubectl get pods
+          kubectl get ingress
+
+      - name: Test Application Health
+        run: |
+          echo "Testing application health..."
+          sleep 10
+          curl -f https://135.171.216.72.nip.io/health || exit 1
+          echo "✅ Application is healthy!"
+
+      # Notification
+      - name: Deployment Summary
+        if: success()
+        run: |
+          echo "🎉 Deployment Successful!"
+          echo "Frontend: https://135.171.216.72.nip.io/"
+          echo "API: https://135.171.216.72.nip.io/api"
+          echo "Version: ${{ github.sha }}"
