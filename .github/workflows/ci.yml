@@ -1,0 +1,117 @@
+name: CI - Build and Test
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build-api:
+    name: Build API
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Install API dependencies
+        working-directory: ./api
+        run: npm ci
+
+      - name: Build API
+        working-directory: ./api
+        run: npm run build
+
+      - name: Test API Docker build
+        run: docker build -t mindx-week1-api:test ./api
+
+      - name: API Build Summary
+        run: |
+          echo "✅ API build successful!"
+
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Install Frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Build Frontend
+        working-directory: ./frontend
+        run: npm run build
+
+      - name: Test Frontend Docker build
+        run: docker build -t mindx-week1-frontend:test ./frontend
+
+      - name: Frontend Build Summary
+        run: |
+          echo "✅ Frontend build successful!"
+
+  validate-manifests:
+    name: Validate K8s Manifests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Validate Kubernetes manifests
+        run: |
+          # Install kubectl
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
+
+          # Validate manifests (dry-run)
+          echo "Validating API deployment..."
+          kubectl apply --dry-run=client -f k8s-manifests/api-deployment.yaml
+
+          echo "Validating Frontend deployment..."
+          kubectl apply --dry-run=client -f k8s-manifests/frontend-deployment.yaml
+
+          echo "Validating Ingress..."
+          kubectl apply --dry-run=client -f k8s-manifests/ingress.yaml
+
+          echo "Validating Cert Issuer..."
+          kubectl apply --dry-run=client -f k8s-manifests/cert-issuer.yaml
+
+          echo "✅ All manifests are valid!"
+
+  summary:
+    name: Build Summary
+    runs-on: ubuntu-latest
+    needs: [build-api, build-frontend, validate-manifests]
+    if: always()
+
+    steps:
+      - name: Check build status
+        run: |
+          echo "🎉 CI Pipeline Summary"
+          echo "API Build: ${{ needs.build-api.result }}"
+          echo "Frontend Build: ${{ needs.build-frontend.result }}"
+          echo "Manifest Validation: ${{ needs.validate-manifests.result }}"
+
+          if [ "${{ needs.build-api.result }}" != "success" ] || \
+             [ "${{ needs.build-frontend.result }}" != "success" ] || \
+             [ "${{ needs.validate-manifests.result }}" != "success" ]; then
+            echo "❌ Some checks failed!"
+            exit 1
+          else
+            echo "✅ All checks passed!"
+          fi

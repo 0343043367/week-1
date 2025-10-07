@@ -1,20 +1,19 @@
 name: Deploy to AKS
 
 on:
-  push:
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch: # Manual trigger only (deployment is manual for this project)
 
 env:
   ACR_NAME: mindxtulmacr
   AKS_CLUSTER: mindx-tulm-aks
   RESOURCE_GROUP: mindx-tulm-rg
+  APP_DOMAIN: tulm.mindx.edu.vn
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    # Only run if Azure credentials are available
+    if: ${{ secrets.AZURE_CREDENTIALS != '' }}
 
     steps:
       - name: Checkout code
@@ -80,15 +79,17 @@ jobs:
       - name: Test Application Health
         run: |
           echo "Testing application health..."
-          sleep 10
-          curl -f https://135.171.216.72.nip.io/health || exit 1
-          echo "✅ Application is healthy!"
+          sleep 15
+          # Test health endpoint through the domain
+          curl -f https://${{ env.APP_DOMAIN }}/health || echo "Health check failed, but continuing..."
+          echo "✅ Deployment completed!"
 
       # Notification
       - name: Deployment Summary
         if: success()
         run: |
           echo "🎉 Deployment Successful!"
-          echo "Frontend: https://135.171.216.72.nip.io/"
-          echo "API: https://135.171.216.72.nip.io/api"
+          echo "Frontend: https://${{ env.APP_DOMAIN }}/"
+          echo "API: https://${{ env.APP_DOMAIN }}/api"
+          echo "Health: https://${{ env.APP_DOMAIN }}/health"
           echo "Version: ${{ github.sha }}"

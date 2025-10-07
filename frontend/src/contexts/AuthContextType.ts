@@ -3,6 +3,7 @@ import { createContext } from "react";
 export interface User {
   email: string;
   name: string;
+  createdAt?: Date | string;
 }
 
 export interface AuthContextType {

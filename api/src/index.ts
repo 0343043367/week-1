@@ -248,12 +248,32 @@ const handleOpenIDCallback = async (req: Request, res: Response) => {
 
     console.log("Decoded ID token:", decoded);
 
-    // Create user with available information
-    // Note: MindX ID token only contains 'sub' (user ID), not email/name
-    // In production, you might need to request additional scopes or use a different endpoint
+    // Try to fetch user info from /me endpoint using access_token
+    let userInfo: any = {};
+    try {
+      const userInfoResponse = await axios.get(OPENID_CONFIG.userinfoEndpoint, {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      });
+      userInfo = userInfoResponse.data;
+      console.log("User info from /me endpoint:", userInfo);
+    } catch (error) {
+      console.log(
+        "Could not fetch from /me endpoint, using token data:",
+        error instanceof Error ? error.message : "Unknown error"
+      );
+    }
+
+    // Create user with available information (prefer /me data, fallback to token)
     const user = {
-      email: decoded.email || "tulm@mindx.com.vn",
-      name: decoded.name || decoded.preferred_username || "Lê Minh Tú",
+      email: userInfo.email || decoded.email || `tulm@mindx.com.vn`,
+      name:
+        userInfo.name ||
+        decoded.name ||
+        decoded.preferred_username ||
+        userInfo.username ||
+        "Lê Minh Tú",
       createdAt: new Date(),
     };
 

@@ -272,7 +272,9 @@ kubectl rollout status deployment/mindx-week1-api
 
 - [API Documentation](api/README.md) - Chi tiết về backend API endpoints
 - [Frontend Documentation](frontend/README.md) - Hướng dẫn về React frontend
+- [Authentication Guide](AUTHENTICATION_GUIDE.md) - **⭐ Chi tiết về JWT & OpenID Connect authentication flow**
 - [K8s Manifests Guide](k8s-manifests/README.md) - Kubernetes deployment manifests
+- [Git Commit Guide](GIT_COMMIT_GUIDE.md) - Best practices cho git commits (Conventional Commits)
 
 ## 🎓 Kiến Thức Đạt Được
 
