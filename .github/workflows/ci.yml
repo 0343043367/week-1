@@ -88,10 +88,10 @@ jobs:
           echo "Validating Ingress..."
           kubectl apply --dry-run=client -f k8s-manifests/ingress.yaml
 
-          echo "Validating Cert Issuer..."
-          kubectl apply --dry-run=client -f k8s-manifests/cert-issuer.yaml
+          echo "⚠️ Skipping Cert Issuer validation (requires cert-manager CRDs)"
+          echo "Note: cert-issuer.yaml will be validated during actual deployment to AKS"
 
-          echo "✅ All manifests are valid!"
+          echo "✅ All core manifests are valid!"
 
   summary:
     name: Build Summary
