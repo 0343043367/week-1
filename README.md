@@ -14,7 +14,8 @@
 - **Authentication**: Hệ thống xác thực kép (JWT + OpenID Connect với MindX ID)
 - **Infrastructure**: Docker + Kubernetes (Azure AKS)
 - **Domain**: HTTPS với Let's Encrypt
-- **Deployment**: Thủ công lên Azure AKS
+- **CI/CD**: GitHub Actions - Auto Deploy on Push
+- **Deployment**: Tự động deploy khi push code lên main
 
 **🌐 Demo:** https://tulm.mindx.edu.vn
 
@@ -307,4 +308,5 @@ Sau khi hoàn thành dự án này, bạn đã nắm được:
 **Author**: Lê Minh Tú - MindX Engineer Onboarding Program  
 **Week**: 1  
 **Status**: ✅ **HOÀN THÀNH & PRODUCTION READY**  
-**Last Updated**: October 6, 2025
+**Last Updated**: October 8, 2025  
+**CI/CD**: ✅ GitHub Actions enabled - Auto deploy on push
