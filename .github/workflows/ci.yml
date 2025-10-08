@@ -78,15 +78,20 @@ jobs:
           chmod +x kubectl
           sudo mv kubectl /usr/local/bin/
 
-          # Validate manifests (dry-run)
+          # Install kubeval for offline validation
+          wget https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz
+          tar xf kubeval-linux-amd64.tar.gz
+          sudo mv kubeval /usr/local/bin/
+
+          # Validate YAML syntax and Kubernetes schema
           echo "Validating API deployment..."
-          kubectl apply --dry-run=client -f k8s-manifests/api-deployment.yaml
+          kubeval --strict k8s-manifests/api-deployment.yaml
 
           echo "Validating Frontend deployment..."
-          kubectl apply --dry-run=client -f k8s-manifests/frontend-deployment.yaml
+          kubeval --strict k8s-manifests/frontend-deployment.yaml
 
           echo "Validating Ingress..."
-          kubectl apply --dry-run=client -f k8s-manifests/ingress.yaml
+          kubeval --strict k8s-manifests/ingress.yaml
 
           echo "⚠️ Skipping Cert Issuer validation (requires cert-manager CRDs)"
           echo "Note: cert-issuer.yaml will be validated during actual deployment to AKS"
