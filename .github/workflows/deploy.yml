@@ -1,7 +1,10 @@
 name: Deploy to AKS
 
 on:
-  workflow_dispatch: # Manual trigger only (deployment is manual for this project)
+  push:
+    tags:
+      - "v*" # Trigger on version tags like v1.0.0, v1.1.0, etc.
+  workflow_dispatch: # Also allow manual trigger
 
 env:
   ACR_NAME: mindxtulmacr
@@ -19,6 +22,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Extract version from tag
+      - name: Get version from tag
+        id: version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          else
+            VERSION=${{ github.sha }}
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Deploying version: $VERSION"
+
       # Login to Azure
       - name: Azure Login
         uses: azure/login@v1
@@ -32,25 +47,25 @@ jobs:
       # Build and Push API Image
       - name: Build API Docker Image
         run: |
-          docker build -t ${{ env.ACR_NAME }}.azurecr.io/mindx-week1-api:${{ github.sha }} \
+          docker build -t ${{ env.ACR_NAME }}.azurecr.io/mindx-week1-api:${{ steps.version.outputs.VERSION }} \
                        -t ${{ env.ACR_NAME }}.azurecr.io/mindx-week1-api:latest \
                        ./api
 
       - name: Push API Image to ACR
         run: |
-          docker push ${{ env.ACR_NAME }}.azurecr.io/mindx-week1-api:${{ github.sha }}
+          docker push ${{ env.ACR_NAME }}.azurecr.io/mindx-week1-api:${{ steps.version.outputs.VERSION }}
           docker push ${{ env.ACR_NAME }}.azurecr.io/mindx-week1-api:latest
 
       # Build and Push Frontend Image
       - name: Build Frontend Docker Image
         run: |
-          docker build -t ${{ env.ACR_NAME }}.azurecr.io/mindx-week1-frontend:${{ github.sha }} \
+          docker build -t ${{ env.ACR_NAME }}.azurecr.io/mindx-week1-frontend:${{ steps.version.outputs.VERSION }} \
                        -t ${{ env.ACR_NAME }}.azurecr.io/mindx-week1-frontend:latest \
                        ./frontend
 
       - name: Push Frontend Image to ACR
         run: |
-          docker push ${{ env.ACR_NAME }}.azurecr.io/mindx-week1-frontend:${{ github.sha }}
+          docker push ${{ env.ACR_NAME }}.azurecr.io/mindx-week1-frontend:${{ steps.version.outputs.VERSION }}
           docker push ${{ env.ACR_NAME }}.azurecr.io/mindx-week1-frontend:latest
 
       # Deploy to AKS
@@ -60,12 +75,12 @@ jobs:
 
       - name: Deploy API to AKS
         run: |
-          kubectl set image deployment/mindx-api api=${{ env.ACR_NAME }}.azurecr.io/mindx-week1-api:${{ github.sha }} --record
+          kubectl set image deployment/mindx-api api=${{ env.ACR_NAME }}.azurecr.io/mindx-week1-api:${{ steps.version.outputs.VERSION }} --record
           kubectl rollout status deployment/mindx-api --timeout=300s
 
       - name: Deploy Frontend to AKS
         run: |
-          kubectl set image deployment/mindx-frontend frontend=${{ env.ACR_NAME }}.azurecr.io/mindx-week1-frontend:${{ github.sha }} --record
+          kubectl set image deployment/mindx-frontend frontend=${{ env.ACR_NAME }}.azurecr.io/mindx-week1-frontend:${{ steps.version.outputs.VERSION }} --record
           kubectl rollout status deployment/mindx-frontend --timeout=300s
 
       # Verify Deployment
@@ -92,4 +107,4 @@ jobs:
           echo "Frontend: https://${{ env.APP_DOMAIN }}/"
           echo "API: https://${{ env.APP_DOMAIN }}/api"
           echo "Health: https://${{ env.APP_DOMAIN }}/health"
-          echo "Version: ${{ github.sha }}"
+          echo "Version: ${{ steps.version.outputs.VERSION }}"
