@@ -73,6 +73,7 @@ jobs:
 
       - name: Validate Kubernetes manifests
         run: |
+          set -e  # Exit immediately if any command fails
           echo "Validating YAML syntax and basic Kubernetes structure..."
 
           # Install yq for YAML validation
@@ -87,22 +88,21 @@ jobs:
             # Check if valid YAML
             if ! yq eval '.' "$file" > /dev/null 2>&1; then
               echo "❌ Invalid YAML syntax in $file"
-              return 1
+              exit 1
             fi
             
             # Check if it has apiVersion and kind
             if ! yq eval '.apiVersion' "$file" > /dev/null 2>&1; then
               echo "❌ Missing apiVersion in $file"
-              return 1
+              exit 1
             fi
             
             if ! yq eval '.kind' "$file" > /dev/null 2>&1; then
               echo "❌ Missing kind in $file"
-              return 1
+              exit 1
             fi
             
             echo "✅ $file is valid"
-            return 0
           }
 
           # Validate each manifest
