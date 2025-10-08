@@ -2,8 +2,8 @@ name: Deploy to AKS
 
 on:
   push:
-    tags:
-      - "v*" # Trigger on version tags like v1.0.0, v1.1.0, etc.
+    branches:
+      - main # Auto deploy when push to main branch
   workflow_dispatch: # Also allow manual trigger
 
 env:
