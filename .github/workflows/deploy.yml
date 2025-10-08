@@ -58,8 +58,8 @@ jobs:
       - name: Build Frontend Docker Image
         run: |
           docker build \
-            --build-arg VITE_GA4_MEASUREMENT_ID=${{ secrets.VITE_GA4_MEASUREMENT_ID }} \
-            --build-arg VITE_APPINSIGHTS_CONNECTION_STRING=${{ secrets.VITE_APPINSIGHTS_CONNECTION_STRING }} \
+            --build-arg VITE_GA4_MEASUREMENT_ID="${{ secrets.VITE_GA4_MEASUREMENT_ID }}" \
+            --build-arg VITE_APPINSIGHTS_CONNECTION_STRING="${{ secrets.VITE_APPINSIGHTS_CONNECTION_STRING }}" \
             --build-arg VITE_ENABLE_AI_IN_DEV=false \
             -t ${{ env.ACR_NAME }}.azurecr.io/mindx-week1-frontend:${{ steps.version.outputs.VERSION }} \
             -t ${{ env.ACR_NAME }}.azurecr.io/mindx-week1-frontend:latest \
