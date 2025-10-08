@@ -1,4 +1,11 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect } from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { useAuth } from "./contexts/useAuth";
 import { Login } from "./components/Login";
@@ -8,7 +15,19 @@ import { Profile } from "./components/Profile";
 import { Settings } from "./components/Settings";
 import { OpenIDCallback } from "./components/OpenIDCallback";
 import { Navigation } from "./components/Navigation";
+import { GA4Events } from "./services/googleAnalytics";
 import "./App.css";
+
+// Track page views on route change
+function PageViewTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    GA4Events.pageView(location.pathname + location.search, document.title);
+  }, [location]);
+
+  return null;
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
@@ -54,6 +73,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <BrowserRouter>
+      <PageViewTracker />
       <AuthProvider>
         <Routes>
           {/* Public Routes */}

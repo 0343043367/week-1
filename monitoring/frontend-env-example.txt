@@ -1,0 +1,14 @@
+# Copy this to frontend/.env.local (DO NOT commit .env.local)
+
+# Application Insights (Frontend Monitoring)
+VITE_APPINSIGHTS_CONNECTION_STRING="InstrumentationKey=xxx;IngestionEndpoint=https://xxx.in.applicationinsights.azure.com/;LiveEndpoint=https://xxx.livediagnostics.monitor.azure.com/"
+
+# Google Analytics 4 (Product Analytics)  
+VITE_GA4_MEASUREMENT_ID="G-XXXXXXXXXX"
+
+# API Base URL
+VITE_API_URL="https://tulm.mindx.edu.vn"
+
+# Enable App Insights in development (optional, default: false)
+VITE_ENABLE_AI_IN_DEV="false"
+

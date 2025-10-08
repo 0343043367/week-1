@@ -10,10 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@microsoft/applicationinsights-react-js": "^17.3.1",
+    "@microsoft/applicationinsights-web": "^3.3.1",
     "bcryptjs": "^3.0.2",
     "jsonwebtoken": "^9.0.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "react-ga4": "^2.1.0",
     "react-router-dom": "^7.9.3"
   },
   "devDependencies": {

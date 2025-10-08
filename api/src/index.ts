@@ -1,13 +1,28 @@
-import express, { Request, Response } from "express";
-import cors from "cors";
+// ===== Load environment variables FIRST =====
 import dotenv from "dotenv";
+dotenv.config();
+
+// ===== Initialize Application Insights BEFORE other imports =====
+import {
+  setupApplicationInsights,
+  getAppInsightsClient,
+} from "./middleware/appInsights";
+const appInsightsClient = setupApplicationInsights();
+
+// ===== Regular imports =====
+import express, { Request, Response, NextFunction } from "express";
+import cors from "cors";
 import bcrypt from "bcryptjs";
 import axios from "axios";
 import jwt from "jsonwebtoken";
 import { authenticateJWT, generateToken, AuthRequest } from "./middleware/auth";
-
-// Load environment variables
-dotenv.config();
+import {
+  metricsMiddleware,
+  trackCustomEvent,
+  trackCustomError,
+  trackCustomMetric,
+  trackDependency,
+} from "./middleware/metricsMiddleware";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -34,6 +49,9 @@ app.use((req, _res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
   next();
 });
+
+// Add metrics middleware for Application Insights monitoring
+app.use(metricsMiddleware);
 
 // Mock user database (for demo purposes - in production use real database)
 interface User {
@@ -86,6 +104,12 @@ app.post("/auth/register", async (req: Request, res: Response) => {
     // Generate token
     const token = generateToken({ email, name });
 
+    // Track successful registration
+    trackCustomEvent("UserRegistration", {
+      method: "password",
+      status: "success",
+    });
+
     res.status(201).json({
       message: "User registered successfully",
       token,
@@ -97,6 +121,13 @@ app.post("/auth/register", async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Registration error:", error);
+
+    // Track registration error
+    trackCustomError(error as Error, {
+      operation: "registration",
+      endpoint: "/auth/register",
+    });
+
     res.status(500).json({
       error: "Server error",
       message: "An error occurred during registration",
@@ -140,6 +171,12 @@ app.post("/auth/login", async (req: Request, res: Response) => {
     // Generate token
     const token = generateToken({ email: user.email, name: user.name });
 
+    // Track successful login
+    trackCustomEvent("UserLogin", {
+      method: "password",
+      status: "success",
+    });
+
     res.json({
       message: "Login successful",
       token,
@@ -151,6 +188,13 @@ app.post("/auth/login", async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Login error:", error);
+
+    // Track login error
+    trackCustomError(error as Error, {
+      operation: "login",
+      endpoint: "/auth/login",
+    });
+
     res.status(500).json({
       error: "Server error",
       message: "An error occurred during login",
@@ -321,6 +365,7 @@ app.get("/health", (_req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: process.env.NODE_ENV || "development",
+    monitoring: appInsightsClient ? "enabled" : "disabled",
   });
 });
 
@@ -374,9 +419,18 @@ app.use((_req: Request, res: Response) => {
   });
 });
 
-// Error handler
-app.use((err: Error, _req: Request, res: Response) => {
+// Global error handler with Application Insights tracking
+app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
   console.error("Error:", err);
+
+  // Track error in App Insights
+  trackCustomError(err, {
+    endpoint: req.path,
+    method: req.method,
+    stack: err.stack || "",
+    userAgent: req.get("user-agent") || "unknown",
+  });
+
   res.status(500).json({
     error: "Internal Server Error",
     message:
@@ -392,6 +446,11 @@ app.listen(PORT, () => {
   console.log(`🚀 MindX Week 1 API Server`);
   console.log(`📍 Running on: http://localhost:${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
+  console.log(
+    `📊 Monitoring: ${
+      appInsightsClient ? "✅ Enabled with App Insights" : "❌ Disabled"
+    }`
+  );
   console.log(`⏰ Started at: ${new Date().toISOString()}`);
   console.log("=".repeat(50));
   console.log("\nAvailable endpoints:");
@@ -407,4 +466,33 @@ app.listen(PORT, () => {
   console.log("\n🔒 Protected endpoints:");
   console.log(`  GET  http://localhost:${PORT}/api/protected`);
   console.log("=".repeat(50));
+});
+
+// Graceful shutdown handlers
+process.on("SIGTERM", () => {
+  console.log("📍 SIGTERM received, shutting down gracefully...");
+  if (appInsightsClient) {
+    appInsightsClient.flush({
+      callback: () => {
+        console.log("✅ Application Insights telemetry flushed");
+        process.exit(0);
+      },
+    });
+  } else {
+    process.exit(0);
+  }
+});
+
+process.on("SIGINT", () => {
+  console.log("\n📍 SIGINT received, shutting down gracefully...");
+  if (appInsightsClient) {
+    appInsightsClient.flush({
+      callback: () => {
+        console.log("✅ Application Insights telemetry flushed");
+        process.exit(0);
+      },
+    });
+  } else {
+    process.exit(0);
+  }
 });

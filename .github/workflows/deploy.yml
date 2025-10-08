@@ -57,9 +57,13 @@ jobs:
       # Build and Push Frontend Image
       - name: Build Frontend Docker Image
         run: |
-          docker build -t ${{ env.ACR_NAME }}.azurecr.io/mindx-week1-frontend:${{ steps.version.outputs.VERSION }} \
-                       -t ${{ env.ACR_NAME }}.azurecr.io/mindx-week1-frontend:latest \
-                       ./frontend
+          docker build \
+            --build-arg VITE_GA4_MEASUREMENT_ID=${{ secrets.VITE_GA4_MEASUREMENT_ID }} \
+            --build-arg VITE_APPINSIGHTS_CONNECTION_STRING=${{ secrets.VITE_APPINSIGHTS_CONNECTION_STRING }} \
+            --build-arg VITE_ENABLE_AI_IN_DEV=false \
+            -t ${{ env.ACR_NAME }}.azurecr.io/mindx-week1-frontend:${{ steps.version.outputs.VERSION }} \
+            -t ${{ env.ACR_NAME }}.azurecr.io/mindx-week1-frontend:latest \
+            ./frontend
 
       - name: Push Frontend Image to ACR
         run: |
@@ -70,6 +74,11 @@ jobs:
       - name: Set AKS Context
         run: |
           az aks get-credentials --name ${{ env.AKS_CLUSTER }} --resource-group ${{ env.RESOURCE_GROUP }} --overwrite-existing
+
+      - name: Deploy Monitoring Secrets
+        run: |
+          kubectl apply -f k8s-manifests/monitoring-secrets.yaml
+          echo "✅ Monitoring secrets deployed"
 
       - name: Deploy API to AKS
         run: |

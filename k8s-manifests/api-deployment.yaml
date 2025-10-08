@@ -27,6 +27,20 @@ spec:
               value: "production"
             - name: PORT
               value: "3000"
+            # Application Insights Configuration
+            - name: APPINSIGHTS_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: app-insights-secret
+                  key: connection-string
+                  optional: true
+            - name: APPINSIGHTS_INSTRUMENTATION_LOGGING_LEVEL
+              value: "info"
+            - name: APPINSIGHTS_ENABLE_AUTO_COLLECTION
+              value: "true"
+            - name: APPINSIGHTS_ENABLE_LIVE_METRICS
+              value: "true"
+            # OpenID Configuration
             - name: OPENID_CLIENT_ID
               value: "mindx-onboarding"
             - name: OPENID_CLIENT_SECRET
